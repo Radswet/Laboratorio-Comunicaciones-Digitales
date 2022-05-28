@@ -1,0 +1,188 @@
+\section{Metodología}\label{sec:metodologia}
+
+    \subsection{\textbf{Actividad previa}}%actividad 1
+    
+    La experiencia comenzó con la realización de una actividad previa que consistió en la  creación de la gráfica de la respuesta al impulso para un pulso coseno alzado, y  además se realizó otro gráfico para la respuesta en frecuencia para este mismo pulso.
+
+        \subsubsection{\textbf{Gráfica coseno alzado}}
+        
+        Se gráfica a través de la herramienta $``Matlab"$ , el pulso coseno alzado con una frecuencia de ancho de banda de $6 db$ , tal pulso nos permitirá analizar y crear  posteriormente  el diagrama de ojo.
+        
+        Para realizar tal gráfica es necesario establecer un factor $roll-off$, tal factor denomina cual es el porcentaje de ancho de banda que excede la señal con respecto al ancho de banda que ocuparía un pulso rectangular\cite{WinNT:filtro}, además de este factor, se establece los parámetros  que nos permitirán realizar la señal.
+
+\begin{lstlisting}[language=mat]
+ fo=1000
+    fs=fo*10;
+    alpha = 0.22;
+    cosNum = cos(2*pi*alpha*fo*t);
+    cosDen = (1-(4*alpha*fo*t).^2);
+    cosDenZero = find(abs(cosDen)< 10^-10);
+    cosOp = cosNum./cosDen;
+    cosOp(cosDenZero) = pi/4;
+\end{lstlisting}
+
+
+       
+        
+        \subsubsection{\textbf{Respuesta al impulso}}
+        
+        Para poder graficar y obtener la respuesta al impulso es necesario esclarecer que significa como tal la respuesta al impulso. Se define como la respuesta en el dominio del tiempo del sistema\cite{WinNT:respuestaImpulso}, esto quiere decir que nos va a mostrar información tanto de la amplitud como del tiempo.
+        \\
+        En temas de procedimiento, se establece la multiplicación con las variables anteriormente utilizadas para la creación del coseno alzado con el fin de establecer la respuesta al impulso.\\
+        
+       
+    \begin{lstlisting}[language=mat]
+        h_et = 2*fo*sincOp.*cosOp;
+    \end{lstlisting}
+        
+        \subsubsection{\textbf{Respuesta en frecuencia}}
+        
+        Para poder graficar y obtener la respuesta en frecuencia, se utilizó el comando $"$ fft $"$ proporcionado por la herramienta $"$Matlab$"$, con esta herramienta nos permite calcular la transformada de fourier  que nos permite transformar señales entre el dominio del tiempo al dominio de la frecuencia, para poder analizar la señal desde una perspectiva de la frecuencia.
+        
+
+\begin{lstlisting}[language=mat]
+H_et=fft(h_et);
+f=fs*(-(length(H_et)-1)/2:(length(H_et)-1)/2)/length(H_et);
+\end{lstlisting}
+
+    \subsection{\textbf{Laboratorio Presencial}}%Actividad 2:
+    
+    A continuación se realizo el diagrama de ojo para el pulso coseno alzado utilizando la modulación BPSK, además de establecer un canal perfecto AWGN.
+    
+    Se establecieron los siguienes parametros 
+
+ \begin{lstlisting}[language=mat]
+ %Frecuencia y periodo de sincronizacion
+ fs=1000;
+ Ts=1/fs;
+ Frecuencia de muestreo de Nyquist fn>=2Frecuencia max
+ fm=10*fs;
+ Tm=1/fm;
+ \end{lstlisting}
+
+        
+    Luego se realizó la generación de los $10^{5}$ junto con las muestras y un vector de tiempo.
+        
+\begin{lstlisting}[language=mat]
+%a_n, valores que tendrán los pulsos [-1,1] antípoda binaria
+valores=(2*randi([0,1],[1,10^5]))-1;
+
+%Muestras para un periodo de sincronización
+m=Ts/Tm;
+
+%Vector de tiempo, respecto a los impulsos que tenga el Tren.
+t=[-(length(valores)/2)*Ts:Tm:(length(valores)/2)*Ts];
+\end{lstlisting}
+
+Luego se generó el tren de impulsos para las $m$ muestras anteriores.
+        
+
+
+\begin{lstlisting}[language=mat]
+%Tren de Impulsos separados en Ts => por m muestras
+TrenImpulsos=t;
+contador=m-1;
+indiceValores=1;
+for index=1 : (length(t)-1)
+    if(indiceValores<=length(valores))
+        if(contador == (m-1) )
+            TrenImpulsos(index)=valores(indiceValores);
+            indiceValores=indiceValores+1;
+            contador=0;
+        else
+            TrenImpulsos(index)=0;
+            contador=contador+1;
+        end
+    else 
+        TrenImpulsos(index)=0;
+    end
+end
+\end{lstlisting}
+
+
+A continuación  se generó  una onda con período ts asignado anteriormente. Junto a una función de transferencia filtro transmisor, y la creación de la señal de entrada.
+
+\begin{lstlisting}[language=mat]
+%Onda cajon con periodo Ts, funcion transferencia filtro trasmisor h_t(t)
+h_t=t;
+for index = 1 : length(h_t) 
+    if( (length(h_t)/2)- (m/2) <= index && index <= (length(h_t)/2)+(m/2)) %Bonito
+        h_t(index)=1;
+    else
+        h_t(index)=0;
+    end
+end
+
+%Señal de entrada x(t)
+x_t=conv(TrenImpulsos,h_t);
+t2=[-((length(x_t)/2)/m)*Ts:Tm:+((length(x_t)/2)/m)*Ts];
+\end{lstlisting}
+
+
+Luego se realiza el pulso coseno alzado, utilizando lo realizado en la actividad previa. La única modificación fue  de asignar $\alpha$ (alpha) como 0.22 
+
+
+
+
+\begin{lstlisting}[language=mat]
+%Coseno alzado
+%Frecuencia de ancho de banda de 6dB, mitad de velocidad de simbolos
+fo=fs/2;% fo=1000/2=500 Hz
+sincNum = sin(2*pi*fo*t);
+sincDen = (2*pi*fo*t);
+sincDenZero = find(abs(sincDen) < 10^-10);
+sincOp = sincNum./sincDen;
+sincOp(sincDenZero) = 1;
+
+alpha = 0.22;
+cosNum = cos(2*pi*alpha*fo*t);
+cosDen = (1-(4*alpha*fo*t).^2);
+cosDenZero = find(abs(cosDen)< 10^-10);
+cosOp = cosNum./cosDen;
+cosOp(cosDenZero) = pi/4;
+\end{lstlisting}
+
+
+Luego de esto se asigna la respuesta de impulso equivalente con las fracciones del seno y el coseno creadas en  el paso anterior, luego mediante la función fft que retorna la transformada de fourier de un vector se asigna el parámetro y calcula la función equivalente de transferencia.
+
+\begin{lstlisting}[language=mat]
+%Respuesta impulso equivalente h_e(t)
+h_et = 2*fo*sincOp.*cosOp;
+%Funcion equivalente de tranferencia H_e(t)
+H_et=fft(h_et);
+f=fs*(-(length(H_et)-1)/2:(length(H_et)-1)/2)/length(H_et);
+\end{lstlisting}
+
+
+Luego se calcula la convolución del $"$Tren  de Impulsos$''$ y h\_et esto con la finalidad de transmitir  una señal por pulso de Nyquist, evitando la interferencia intersimbólica mientras se cumpla la frecuencia de sincronización para luego crear el canal perfecto AWGN.
+
+\begin{lstlisting}[language=mat]
+SecuenciaFiltrada=conv(TrenImpulsos,h_et);
+tfiltrada=[-((length(SecuenciaFiltrada)/m)/2*Ts):Tm:(length(SecuenciaFiltrada)/m)/2*Ts];
+
+SecuenciaFiltradaRecortada=[1:length(valores)*m];
+shift=length(SecuenciaFiltrada)-length(x_t);
+for i=1:length(valores)*m
+    SecuenciaFiltradaRecortada(i)=SecuenciaFiltrada(shift+i);
+end
+
+filtro = reshape(SecuenciaFiltradaRecortada,2*m,[]);
+y=awgn(filtro,18,'measured'); 
+\end{lstlisting}
+
+
+Para finalizar  se realizaron los gráficos de la siguiente manera.
+
+\begin{lstlisting}[language=mat]
+plot(filtro,'b');  title('Diagrama de ojo'); xlabel('time');ylabel('amplitude');grid on
+
+
+
+plot(y,'b');title('Diagrama de ojo con AWGN');
+\end{lstlisting}
+
+
+        
+        
+        
+    
