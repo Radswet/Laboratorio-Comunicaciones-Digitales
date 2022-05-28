@@ -1,0 +1,117 @@
+                                                                            \section{Metodología}\label{sec:metodologia}
+
+\subsection{Parte 1}
+La primera actividad constó de graficar una señal sinusoidal, su transformada de Fourier, la señal modulada PAM, y finalmente la señal modulada PCM.
+
+\subsubsection{Señal sinusoidal y frecuencia de muestreo}
+Se gráfico una señal sinusoidal coseno, que simbolizara nuestra señal analógica, con una frecuencia de la sinusoidal y una frecuencia de muestreo determinada por la guía del laboratorio.
+
+\subsubsection{Transformada de Fourier}
+Es una herramienta que nos permite transformar señales entre el dominio del tiempo al dominio de la frecuencia, para poder analizar la señal desde una perspectiva de la frecuencia.
+
+Al calcular la transformada de Fourier, se nos retorna la parte real, espectro de Amplitud, y la parte imaginaria, el espectro de fase. El espectro de Amplitud nos entrega la mitad de la amplitud de la señal y el espectro de la fase, el espectro como función impropia, para corregir este tema, multiplicamos por dos la transformada de Fourier, aplicamos el valor absoluto a la señal, dividido por la longitud de la señal para normalizar la amplitud. Ya que la señal era impropia, con el valor absoluto se nos duplicara la señal respecto el eje Y, por lo que solo consideraremos la parte positiva.
+
+\begin{equation} \label{eq:Transformada_de_fourier}
+\begin{split} 
+&Y=fft(mt); \\
+&magTF = 2*(abs(Y(1:L/2)/L)); \\
+&f = fm*(0:L/2-1)/L; \\   
+\end{split}
+\end{equation}
+
+
+
+
+\subsubsection{PAM muestreo natural}
+la modulación por amplitud de pulsos (PAM) describe la conversión de la señal analógica a una señal del tipo de pulso en la cual la amplitud de pulso representa la información analógica.\cite{PAM:Couch}
+
+El muestreo natural o por compuerta nos indica de que forma vamos a capturar los datos de nuestra señal analógica. En este caso, para un muestreo natural, necesitamos multiplicar una señal cajón a nuestra señal analógica, esta señal cajón, aparte de necesitar una frecuencia mayor a la analógica, necesita un parámetro determinado ciclo de trabajo, que nos indica el porcentaje del periodo durante el cual la onda es positiva.
+
+En Matlab se utilizo la señal cuadrada, que para llevarla a cajón se realiza una traslación en el eje Y, para que todos sus valores sean positivo, y se divide en dos, para que la amplitud sea de 1, como la señal cajón.
+
+\begin{equation} \label{eq:PAM_muestreo_natural}
+\begin{split} 
+&\%RECt:Señal\ cajon\ ;\ mt:Señal\ analógica \\
+&RECt=0.5*square(2* pi* fs*t,d)+0.5;    \\
+&SNt=mt.*RECt; \ \%SNt :\ PAM\ muestro\ natural \\
+\end{split}
+\end{equation}
+
+
+
+\subsubsection{PAM muestreo instantáneo}
+El muestreo instantáneo consta de multiplicar nuestra señal analógica por un tren de impulsos, quedando la señal modulada en bloques con amplitud plana, tal como también se le dice a la PAM muestreo instantáneo, una PAM Plana.
+
+Para lograr esto necesitamos multiplicar la señal analógica, por el primer valor de cambio entre 0 y 1 de la señal cajón (un impulso), y luego mantener el mismo valor anterior para la señal modulada, por el tiempo que dure en amplitud 1, la señal cajón. (Lineas 20-30) (Anexo código :\ref{ref:codigo1})
+
+\subsection{Parte 2}
+La segunda actividad constó en realizar una modulación por pulsos codificados, con las señales previamente trabajadas en la actividad anterior se aplicó tal modulación a estas señales con la restricción de considerar N bits configurables en el código.
+
+\subsubsection{Señal cuantificada y comparación con señales anteriores}
+Se realizó un gráfico con el fin de comparar la señal PAM muestreada instantáneamente  creada en la actividad 1 junto con la señal original, adicionalmente se cuantificó la señal PAM.
+
+Para lograr la cuantificación de la señal PAM muestreada instantáneamente, se procedió a dividir todo el rango de la amplitud y se fue asignando el  valor obtenido  a todas las muestras que están contenidas en el rango tomado para realizar la codificación.(Líneas 19-20).(Anexo código:\ref{ref:codigo_actividad_2})
+
+\begin{equation} \label{eq:Señal_cuantificada_y_comparacion_con_señales_anteriores}
+\begin{split} 
+&vmax=1; \%Valor máximo de s \\
+&vmin=-vmax; \%Valor mínimo \\
+&del=(vmax-vmin)/M; \\
+&part=vmin:del:vmax; \\
+&code=vmin-(del/2):del:vmax+(del/2); \\
+\end{split}
+\end{equation}
+
+ Por otra parte se necesito obtener los niveles de cuantificación de la señal, para esto se ocupó la función de Matlab denominada "quantiz," este comando permitió devolver los niveles de cuantificación de la señal de entrada siguiente mediante  el uso de la partición de cuantificación escalar definida  en la variable  de entrada(Línea 25).(Anexo código\ref{ref:codigo_actividad_2})
+ 
+\begin{equation} \label{eq:Señal_cuantificada_y_comparacion_con_señales_anteriores_2}
+\begin{split} 
+&[ind,q]=quantiz(coseno,part,code); \\
+&\%Proceso\ de\ Cuantización
+\end{split}
+\end{equation}
+ 
+
+\subsubsection(Codificación y Error de cuantificación)
+En el siguiente apartado se realizó un gráfico a partir de la codificación de la PAM muestreada instantáneamente con el fin de graficar el error por cuantización que presenta tal señal.
+
+Se empezó codificando la señal PAM, para esto se utilizan los valores codificados anteriormente con el fin de utilizarlos para usar la función de Matlab denominada "de2bi", tal comando nos permite transformar decimales en su forma binaria esto se utilizará posteriormente para asignar a cada nivel de cuantización un código binario(Lineas 46-56).(Anexo código: \ref{ref:codigo_actividad_2})
+
+\begin{equation} \label{eq:Codificacion_y_Error_de_cuantificacion}
+\begin{split} 
+&\%Proceso de Codificación \\
+& code=de2bi(ind,'left-msb'); \\
+& k=1; \\
+& for i=1:l1 \\
+&	for j=1:numBits \\
+&		coded(k)=code(i,j); \\
+&		j=j+1; \\
+&		k=k+1; \\
+&	end \\
+&	i=i+1; \\
+& end \\
+\end{split}
+\end{equation}
+
+Posterior a realizar la codificación de la señal, se procedió a realizar el gráfico del error por cuantización, tal efecto se define como la diferencia del valor real de la señal y la señal cuantificada, es decir la magnitud de la señal de entrada y la de salida, representándose bajo la siguiente ecuación.
+
+\begin{equation} \label{eq:Codificacion_y_Error_de_cuantificacion_2}
+\begin{split} 
+&eq(n)=xq(n)-x(n) \\
+&En\ donde\ eq(n)\ siempre\ debe\ estar\ en\ el\ rango \\
+&-delta/2>eq(n)<delta/2 \\
+&delta=R/L \\
+&R=rango\ de\ cuantización \\
+&L=Número\ de\ niveles\ de\ cuantificación \\
+\end{split}
+\end{equation}
+
+
+
+
+
+
+
+
+
+
