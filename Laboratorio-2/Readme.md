@@ -1,0 +1,1 @@
+# Laboratorio 2 Interferencia Intersímbolo (ISI)
